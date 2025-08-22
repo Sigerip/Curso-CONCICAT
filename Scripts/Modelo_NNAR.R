@@ -23,8 +23,6 @@ previsao_ate <- 2019
 horizonte_previsao <- previsao_ate - treino_fim  # 4 anos
 
 set.seed(123)
-alpha <- 0.05
-z <- qnorm(1 - alpha/2)
 repeats_nnar <- 100
 
 # =========================
@@ -50,23 +48,6 @@ ajustar_nnar <- function(serie_log) {
 }
 
 inv_standardize <- function(z, meanv, sdv) z * sdv + meanv
-
-# calcula sigma_hat pelos resíduos rolling-origin (2012–2015)
-calc_sigma_hat <- function(ylog, anos) {
-  residuos <- c()
-  for (t in 2012:2015) {
-    idx_tr <- anos >= treino_inicio & anos <= (t-1)
-    y_tr <- ylog[idx_tr]
-    if (length(y_tr) < 5) next
-    fit_tmp <- ajustar_nnar(y_tr)
-    fc_tmp <- forecast(fit_tmp$modelo, h = 1)
-    prev_log <- inv_standardize(as.numeric(fc_tmp$mean),
-                                fit_tmp$mean_val, fit_tmp$sd_val)
-    y_real <- ylog[anos == t]
-    residuos <- c(residuos, y_real - prev_log)
-  }
-  sd(residuos, na.rm = TRUE)
-}
 
 # =========================
 # 4. Loop sexo–idade
@@ -96,20 +77,29 @@ for (sexo in unique(tabua$SEXO)) {
     tryCatch({
       nnar_fit <- ajustar_nnar(treino_log)
       
-      # prever 2016–2019
+      # prever 2016–2019 com intervalos bootstrap
       h <- horizonte_previsao
-      fc_z <- forecast(nnar_fit$modelo, h = h)
+      fc_z <- forecast(
+        nnar_fit$modelo,
+        h = h,
+        level = 95,
+        PI = TRUE,
+        bootstrap = TRUE,
+        npaths = 1000
+      )
+      
+      # médias
       prev_log_mean <- inv_standardize(as.numeric(fc_z$mean),
                                        nnar_fit$mean_val, nnar_fit$sd_val)
       prev_ponto <- exp(prev_log_mean)
       
-      # sigma_hat pelos resíduos 2012–2015
-      anos_all <- subdados$ANO
-      ylog_all <- log(pmax(subdados$nMx, 1e-10))
-      sigma_hat <- calc_sigma_hat(ylog_all, anos_all)
-      
-      li <- exp(prev_log_mean - z * sigma_hat)
-      ls <- exp(prev_log_mean + z * sigma_hat)
+      # limites – garantidos pelo forecast
+      prev_log_lower <- inv_standardize(as.numeric(fc_z$lower[1:h,1]),
+                                        nnar_fit$mean_val, nnar_fit$sd_val)
+      prev_log_upper <- inv_standardize(as.numeric(fc_z$upper[1:h,1]),
+                                        nnar_fit$mean_val, nnar_fit$sd_val)
+      li <- exp(prev_log_lower)
+      ls <- exp(prev_log_upper)
       
       anos_previsao <- (treino_fim + 1):previsao_ate
       
@@ -167,7 +157,7 @@ df_metricas <- df_previsoes %>%
 print(head(df_previsoes))
 print(head(df_metricas))
 
-
 # Salvar previsões e métricas
 write.csv(df_previsoes, "NNAR_previsoes.csv", row.names = FALSE)
 write.csv(df_metricas, "NNAR_metricas.csv", row.names = FALSE)
+
