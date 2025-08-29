@@ -123,7 +123,7 @@ prev_ambos <- processar_sexo(dados, names(dados$rate)[3], "Ambos", anos_treino, 
 prev_total <- bind_rows(prev_fem, prev_masc, prev_ambos)
 
 # Incluir dados observados
-observados <- read.table("C:/Users/cleod/OneDrive/Documentos/Documentos/Estudos/Ciências Atuariais/TCC/mort_BR.txt")
+observados <- read.table("https://raw.githubusercontent.com/Sigerip/Curso-CONCICAT/refs/heads/main/Bases%20de%20Dados/mort_BR.txt")
 colnames(observados) <- observados[2, ]
 observados <- observados[-c(1, 2), ]
 
@@ -170,3 +170,4 @@ print(metricas_total)
 # Gravar resultados em CSV
 write.csv(prev_total, "LC_prev_total.csv", row.names = FALSE)
 write.csv(metricas_total, "LC_metricas_por_sexo.csv", row.names = FALSE)
+
