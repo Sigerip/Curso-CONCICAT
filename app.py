@@ -195,16 +195,15 @@ with col2:
 # 7. SEÇÃO DE PREVISÕES (GRÁFICO E ESTATÍSTICAS ORIGINAIS RESTAURADOS)
 st.header(f"🔮 Análise de Previsões - Ano {ano_selecionado}")
 
-col_prev1, col_prev2, col_prev3 = st.columns([1 ,4, 1])
+col_prev1, col_prev2 = st.columns([2, 1])
 
-with col_prev2:
+with col_prev1:
     fig_anos = px.line(
         df_previsoes_filtrado,
         x='idade',
         y='previsto',
         color='modelo',
-        markers=True,
-        height=550,
+        markers=True
     )
     fig_anos.update_layout(
         yaxis_type='log',
@@ -217,6 +216,17 @@ with col_prev2:
     )
     st.plotly_chart(fig_anos, use_container_width=True)
 
+with col_prev2:
+    st.subheader("📋 Estatísticas")
+    
+    stats = df_previsoes_filtrado.groupby('modelo')['previsto'].agg(['mean', 'std', 'min', 'max'])
+    
+    for modelo in stats.index:
+        with st.expander(f"🔍 {modelo}"):
+            st.metric("Média", f"{stats.loc[modelo, 'mean']:.2f}")
+            st.metric("Desvio Padrão", f"{stats.loc[modelo, 'std']:.2f}")
+            st.metric("Mínimo", f"{stats.loc[modelo, 'min']:.2f}")
+            st.metric("Máximo", f"{stats.loc[modelo, 'max']:.2f}")
 
 
 st.markdown("""
