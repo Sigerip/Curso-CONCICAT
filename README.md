@@ -12,7 +12,7 @@
 
 🔮 [Resultados](https://github.com/Sigerip/Curso-CONCICAT/tree/main/Previs%C3%B5es%20e%20m%C3%A9tricas)
 
-### Dashbpard e Colab com os resultados:
+### Dashboard e Colab com os resultados:
 
 📊 [Dashboard Interativo](https://sigerip-minicurso-concicat.streamlit.app/)
 
